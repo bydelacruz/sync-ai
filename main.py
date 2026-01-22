@@ -1,8 +1,10 @@
 import os
 from dotenv import load_dotenv
 from groq import AsyncGroq
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
 from pydantic import BaseModel
+from database import engine, Base, TaskDB, SessionLocal
+from sqlalchemy.orm import Session
 
 # load environment variables from .env file
 load_dotenv()
@@ -10,8 +12,21 @@ load_dotenv()
 # create the Async Groq client
 client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
 
+# Dependency
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+# create tables
+Base.metadata.create_all(bind=engine)
+
 app = FastAPI()
-tasks_db = []
 
 
 async def get_ai_summary(text: str):
@@ -42,8 +57,11 @@ def health_check():
 
 
 @app.post("/tasks")
-async def create_task(task: Task):
+async def create_task(task: Task, db: Session = Depends(get_db)):
     ai_summary = await get_ai_summary(task.description)
     task.summary = ai_summary
-    tasks_db.append(task)
-    return task
+    new_task = TaskDB(**task.model_dump())
+    db.add(new_task)
+    db.commit()
+    db.refresh(new_task)
+    return new_task
