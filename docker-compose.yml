@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  # service 1: The Database
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: sync_ai_db
+    ports:
+      - "5432:5432" # maps the containers port to the computers port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
