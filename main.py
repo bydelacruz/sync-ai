@@ -2,7 +2,7 @@ import os
 from dotenv import load_dotenv
 from groq import AsyncGroq
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from database import engine, Base, TaskDB, SessionLocal
 from sqlalchemy.orm import Session
 
@@ -50,6 +50,8 @@ class Task(BaseModel):
     status: str = "pending"
     summary: str | None = None
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 @app.get("/")
 def health_check():
@@ -72,3 +74,30 @@ async def read_tasks(db: Session = Depends(get_db)):
     tasks = db.query(TaskDB).all()
 
     return tasks
+
+
+@app.put("/tasks/{task_id}/complete")
+async def mark_complete(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(TaskDB).get(task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    task.status = "completed"
+    db.commit()
+    db.refresh(task)
+    return task
+
+
+@app.delete("/tasks/{task_id}")
+def delete_task(task_id: int, db: Session = Depends(get_db)):
+    task = db.query(TaskDB).get(task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    deleted_task = Task.model_validate(task)
+    db.delete(task)
+    db.commit()
+
+    return deleted_task
