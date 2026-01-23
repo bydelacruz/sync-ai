@@ -65,3 +65,10 @@ async def create_task(task: Task, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_task)
     return new_task
+
+
+@app.get("/tasks")
+async def read_tasks(db: Session = Depends(get_db)):
+    tasks = db.query(TaskDB).all()
+
+    return tasks
