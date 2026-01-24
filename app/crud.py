@@ -11,10 +11,13 @@ def create_task(db: Session, task: Task):
     return new_task
 
 
-def get_tasks(db: Session):
-    tasks = db.query(TaskDB).all()
+def get_tasks(db: Session, status: str | None = None):
+    query = db.query(TaskDB)
 
-    return tasks
+    if status:
+        query = query.filter(TaskDB.status == status)
+
+    return query.all()
 
 
 def get_task(db: Session, task_id: int):

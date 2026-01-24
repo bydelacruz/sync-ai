@@ -60,8 +60,8 @@ async def create_task(task: Task, db: Session = Depends(get_db)):
 
 
 @app.get("/tasks")
-async def read_tasks(db: Session = Depends(get_db)):
-    tasks = crud.get_tasks(db)
+async def read_tasks(db: Session = Depends(get_db), status: str | None = None):
+    tasks = crud.get_tasks(db, status)
 
     return tasks
 
