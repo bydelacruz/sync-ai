@@ -2,9 +2,10 @@ import os
 from dotenv import load_dotenv
 from groq import AsyncGroq
 from fastapi import FastAPI, Depends, HTTPException
-from pydantic import BaseModel, ConfigDict
-from database import engine, Base, TaskDB, SessionLocal
+from .database import engine, Base, SessionLocal
+from .schemas import Task
 from sqlalchemy.orm import Session
+from . import crud
 
 # load environment variables from .env file
 load_dotenv()
@@ -44,15 +45,6 @@ async def get_ai_summary(text: str):
     return res.choices[0].message.content
 
 
-class Task(BaseModel):
-    title: str
-    description: str
-    status: str = "pending"
-    summary: str | None = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 @app.get("/")
 def health_check():
     return {"status": "System Operational"}
@@ -62,42 +54,43 @@ def health_check():
 async def create_task(task: Task, db: Session = Depends(get_db)):
     ai_summary = await get_ai_summary(task.description)
     task.summary = ai_summary
-    new_task = TaskDB(**task.model_dump())
-    db.add(new_task)
-    db.commit()
-    db.refresh(new_task)
+    new_task = crud.create_task(db, task)
+
     return new_task
 
 
 @app.get("/tasks")
 async def read_tasks(db: Session = Depends(get_db)):
-    tasks = db.query(TaskDB).all()
+    tasks = crud.get_tasks(db)
 
     return tasks
 
 
-@app.put("/tasks/{task_id}/complete")
-async def mark_complete(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(TaskDB).get(task_id)
+@app.get("/tasks/{task_id}")
+async def read_one(task_id: int, db: Session = Depends(get_db)):
+    task = crud.get_task(db, task_id)
 
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    task.status = "completed"
-    db.commit()
-    db.refresh(task)
+    return task
+
+
+@app.put("/tasks/{task_id}/complete")
+async def mark_complete(task_id: int, db: Session = Depends(get_db)):
+    task = crud.mark_complete(db, task_id)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
     return task
 
 
 @app.delete("/tasks/{task_id}")
 def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(TaskDB).get(task_id)
+    deleted_task = crud.delete_task(db, task_id)
 
-    if not task:
+    if not deleted_task:
         raise HTTPException(status_code=404, detail="Task not found")
-
-    deleted_task = Task.model_validate(task)
-    db.delete(task)
-    db.commit()
 
     return deleted_task
