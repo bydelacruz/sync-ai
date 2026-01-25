@@ -15,13 +15,13 @@ def get_tasks(db: Session, status: str | None = None):
     query = db.query(TaskDB)
 
     if status:
-        query = query.filter(TaskDB.status == status)
+        query = query.filter(TaskDB.status == status.upper())
 
     return query.all()
 
 
 def get_task(db: Session, task_id: int):
-    task = db.query(TaskDB).get(task_id)
+    task = db.get(TaskDB, task_id)
 
     return task
 
@@ -45,7 +45,7 @@ def mark_complete(db: Session, task_id: int):
     if not task:
         return None
 
-    task.status = "completed"
+    task.status = "COMPLETED"
     db.commit()
     db.refresh(task)
 

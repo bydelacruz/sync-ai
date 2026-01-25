@@ -36,6 +36,16 @@ def client():
     app.dependency_overrides.clear()
 
 
+@pytest.fixture
+def test_task(client):
+    res = client.post(
+        "/tasks",
+        json={"title": "groceries", "description": "get milk when i get out of work"},
+    )
+    assert res.status_code == 200
+    yield res.json()
+
+
 @pytest.fixture(scope="function", autouse=True)
 def clean_db():
     # SETUP: Create all tables to ensure they exist
