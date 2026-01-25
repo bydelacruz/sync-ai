@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from .database import engine, Base, get_db
-from .schemas import Task
+from .schemas import Task, UserCreate, User
 from sqlalchemy.orm import Session
 from . import crud
 from .services import get_ai_summary
@@ -15,6 +15,13 @@ app = FastAPI()
 @app.get("/")
 def health_check():
     return {"status": "System Operational"}
+
+
+@app.post("/users", response_model=User)
+async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    new_user = crud.create_user(db, user)
+
+    return new_user
 
 
 @app.post("/tasks")

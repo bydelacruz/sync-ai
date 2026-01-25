@@ -55,3 +55,16 @@ def test_filter_tasks(client):
 
     assert len(res.json()) == 1
     assert res.json()[0]["title"] == "get coffee"
+
+
+# --------User tests----------
+
+
+def test_create_user(client):
+    user = {"username": "benny", "password": "password123"}
+
+    res = client.post("/users", json=user)
+
+    assert res.status_code == 200
+    assert res.json()["username"] == "benny"
+    assert "hashed_password" not in res.json()

@@ -1,6 +1,16 @@
 from sqlalchemy.orm import Session
-from .models import TaskDB
-from .schemas import Task
+from .models import TaskDB, UserDB
+from .schemas import Task, UserCreate
+from .auth import pwd_context
+
+
+def create_user(db: Session, user: UserCreate):
+    user.password = pwd_context.hash(user.password)
+    new_user = UserDB(username=user.username, hashed_password=user.password)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
 
 
 def create_task(db: Session, task: Task):
