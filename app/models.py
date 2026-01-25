@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String, Enum, ForeignKey
 from .schemas import TaskStatus
 from .database import Base
 
@@ -10,3 +11,13 @@ class TaskDB(Base):
     description = Column(String)
     status = Column(Enum(TaskStatus))
     summary = Column(String, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"))
+    user = relationship("UserDB", back_populates="tasks")
+
+
+class UserDB(Base):
+    __tablename__ = "users"
+    id = Column(Integer, primary_key=True, index=True)
+    tasks = relationship("TaskDB", back_populates="user")
+    username = Column(String)
+    hashed_password = Column(String)
