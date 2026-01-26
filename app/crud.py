@@ -1,16 +1,27 @@
 from sqlalchemy.orm import Session
 from .models import TaskDB, UserDB
 from .schemas import Task, UserCreate
-from .auth import pwd_context
+from .auth import get_password_hash, verify_password
 
 
 def create_user(db: Session, user: UserCreate):
-    user.password = pwd_context.hash(user.password)
+    user.password = get_password_hash(user.password)
     new_user = UserDB(username=user.username, hashed_password=user.password)
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
     return new_user
+
+
+def authenticate_user(db: Session, user: UserCreate):
+    existing_user = db.query(UserDB).filter(UserDB.username == user.username).first()
+
+    if existing_user:
+        if verify_password(user.password, existing_user.hashed_password):
+            return existing_user
+        else:
+            return False
+    return None
 
 
 def create_task(db: Session, task: Task):

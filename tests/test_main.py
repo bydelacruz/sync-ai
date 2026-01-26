@@ -68,3 +68,18 @@ def test_create_user(client):
     assert res.status_code == 200
     assert res.json()["username"] == "benny"
     assert "hashed_password" not in res.json()
+
+
+def test_user_login(client):
+    user = {"username": "benny", "password": "password123"}
+    res = client.post("/users", json=user)
+    assert res.status_code == 200
+
+    token = client.post("/users/login", json=user)
+
+    assert token.status_code == 200
+    assert "access_token" in token.json()
+    assert "token_type" in token.json()
+    assert isinstance(token.json()["access_token"], str)
+    assert isinstance(token.json()["token_type"], str)
+    assert token.json()["token_type"] == "bearer"

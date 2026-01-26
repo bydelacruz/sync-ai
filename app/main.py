@@ -4,6 +4,7 @@ from .schemas import Task, UserCreate, User
 from sqlalchemy.orm import Session
 from . import crud
 from .services import get_ai_summary
+from .auth import create_access_token
 
 
 # create tables
@@ -22,6 +23,18 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
     new_user = crud.create_user(db, user)
 
     return new_user
+
+
+@app.post("/users/login")
+async def user_login(user: UserCreate, db: Session = Depends(get_db)):
+    curr_user = crud.authenticate_user(db, user)
+
+    if curr_user:
+        token = create_access_token(
+            {"sub": str(curr_user.id), "username": curr_user.username}
+        )
+        return {"access_token": token, "token_type": "bearer"}
+    raise HTTPException(status_code=401, detail="Incorrect username/password")
 
 
 @app.post("/tasks")
