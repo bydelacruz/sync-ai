@@ -37,10 +37,11 @@ def client():
 
 
 @pytest.fixture
-def test_task(client):
+def test_task(client, token):
     res = client.post(
         "/tasks",
         json={"title": "groceries", "description": "get milk when i get out of work"},
+        headers={"Authorization": f"Bearer {token}"},
     )
     assert res.status_code == 200
     yield res.json()
@@ -55,3 +56,27 @@ def clean_db():
 
     # TEARDOWN: Drop all tables to wipe the data
     Base.metadata.drop_all(bind=test_engine)
+
+
+@pytest.fixture
+def token(client):
+    user = {"username": "benny", "password": "password123"}
+    res = client.post("/users", json=user)
+    assert res.status_code == 200
+
+    res2 = client.post("/users/login", json=user)
+    assert res2.status_code == 200
+
+    yield res2.json()["access_token"]
+
+
+@pytest.fixture
+def attacker_token(client):
+    user = {"username": "evilbenny", "password": "password123"}
+    res = client.post("/users", json=user)
+    assert res.status_code == 200
+
+    res2 = client.post("/users/login", json=user)
+    assert res2.status_code == 200
+
+    yield res2.json()["access_token"]

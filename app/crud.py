@@ -24,16 +24,16 @@ def authenticate_user(db: Session, user: UserCreate):
     return None
 
 
-def create_task(db: Session, task: Task):
-    new_task = TaskDB(**task.model_dump())
+def create_task(db: Session, task: Task, user: UserDB):
+    new_task = TaskDB(**task.model_dump(), owner_id=user.id)
     db.add(new_task)
     db.commit()
     db.refresh(new_task)
     return new_task
 
 
-def get_tasks(db: Session, status: str | None = None):
-    query = db.query(TaskDB)
+def get_tasks(db: Session, user: UserDB, status: str | None = None):
+    query = db.query(TaskDB).filter(TaskDB.owner_id == user.id)
 
     if status:
         query = query.filter(TaskDB.status == status.upper())
@@ -41,16 +41,22 @@ def get_tasks(db: Session, status: str | None = None):
     return query.all()
 
 
-def get_task(db: Session, task_id: int):
+def get_task(db: Session, task_id: int, user: UserDB):
     task = db.get(TaskDB, task_id)
+
+    if not task or task.owner_id != user.id:
+        return None
 
     return task
 
 
-def delete_task(db: Session, task_id: int):
-    task = get_task(db, task_id)
+def delete_task(db: Session, task_id: int, user: UserDB):
+    task = get_task(db, task_id, user)
 
-    if not task:
+    if not task or not user:
+        return None
+
+    if task.owner_id != user.id:
         return None
 
     deleted_task = Task.model_validate(task)
@@ -60,10 +66,12 @@ def delete_task(db: Session, task_id: int):
     return deleted_task
 
 
-def mark_complete(db: Session, task_id: int):
-    task = get_task(db, task_id)
+def mark_complete(db: Session, task_id: int, user: UserDB):
+    task = get_task(db, task_id, user)
 
-    if not task:
+    if not task or not user:
+        return None
+    if task.owner_id != user.id:
         return None
 
     task.status = "COMPLETED"
