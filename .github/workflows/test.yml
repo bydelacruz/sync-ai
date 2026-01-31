@@ -15,4 +15,8 @@ jobs:
       - run: poetry run pytest
         env:
           DATABASE_URL: "sqlite:///./test.db"
+          TEST_DATABASE_URL: "sqlite:///./test.db"
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          ALGORITHM: HS256
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}
