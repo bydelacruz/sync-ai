@@ -24,8 +24,8 @@ def authenticate_user(db: Session, user: UserCreate):
     return None
 
 
-def create_task(db: Session, task: Task, user: UserDB):
-    new_task = TaskDB(**task.model_dump(), owner_id=user.id)
+def create_task(db: Session, task: Task, user: UserDB, embeddings: list[float]):
+    new_task = TaskDB(**task.model_dump(), owner_id=user.id, embeddings=embeddings)
     db.add(new_task)
     db.commit()
     db.refresh(new_task)

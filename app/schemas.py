@@ -7,11 +7,19 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
 
 
-class Task(BaseModel):
+class TaskBase(BaseModel):
     title: str
     description: str
     status: TaskStatus = TaskStatus.PENDING
     summary: str | None = None
+
+
+class TaskCreate(TaskBase):
+    pass
+
+
+class Task(TaskBase):
+    id: int
 
     model_config = ConfigDict(from_attributes=True)
 

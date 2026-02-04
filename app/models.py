@@ -1,5 +1,6 @@
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String, Enum, ForeignKey
+from pgvector.sqlalchemy import Vector
 from .schemas import TaskStatus
 from .database import Base
 
@@ -13,6 +14,7 @@ class TaskDB(Base):
     summary = Column(String, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"))
     user = relationship("UserDB", back_populates="tasks")
+    embeddings = Column(Vector(768))
 
 
 class UserDB(Base):

@@ -1,11 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from .database import engine, Base, get_db
-from .schemas import Task, UserCreate, User
+from .schemas import Task, UserCreate, User, TaskCreate
 from sqlalchemy.orm import Session
 from . import crud
 from .services import get_ai_summary
 from .auth import create_access_token, get_current_user
 from .models import UserDB
+from .ai import get_embedding
 
 
 # create tables
@@ -38,20 +39,21 @@ async def user_login(user: UserCreate, db: Session = Depends(get_db)):
     raise HTTPException(status_code=401, detail="Incorrect username/password")
 
 
-@app.post("/tasks")
+@app.post("/tasks", response_model=Task)
 async def create_task(
-    task: Task,
+    task: TaskCreate,
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
 ):
     ai_summary = await get_ai_summary(task.description)
     task.summary = ai_summary
-    new_task = crud.create_task(db, task, current_user)
+    embeddings = get_embedding(task.title)
+    new_task = crud.create_task(db, task, current_user, embeddings)
 
     return new_task
 
 
-@app.get("/tasks")
+@app.get("/tasks", response_model=list[Task])
 async def read_tasks(
     db: Session = Depends(get_db),
     status: str | None = None,
@@ -62,7 +64,7 @@ async def read_tasks(
     return tasks
 
 
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", response_model=Task)
 async def read_one(
     task_id: int,
     db: Session = Depends(get_db),
@@ -76,7 +78,7 @@ async def read_one(
     return task
 
 
-@app.put("/tasks/{task_id}/complete")
+@app.put("/tasks/{task_id}/complete", response_model=Task)
 async def mark_complete(
     task_id: int,
     db: Session = Depends(get_db),
@@ -90,7 +92,7 @@ async def mark_complete(
     return task
 
 
-@app.delete("/tasks/{task_id}")
+@app.delete("/tasks/{task_id}", response_model=Task)
 def delete_task(
     task_id: int,
     db: Session = Depends(get_db),

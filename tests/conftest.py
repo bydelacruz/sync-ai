@@ -2,11 +2,12 @@ import os
 from dotenv import load_dotenv
 import pytest
 from app.database import Base
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.database import get_db
 from fastapi.testclient import TestClient
+from unittest.mock import patch
 
 
 load_dotenv()
@@ -14,6 +15,13 @@ load_dotenv()
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL")
 test_engine = create_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(bind=test_engine, autocommit=False, autoflush=False)
+
+
+@pytest.fixture(autouse=True)
+def mock_ai_embedding():
+    with patch("app.ai.get_embedding") as mock:
+        mock.return_value = [0.0] * 768
+        yield mock
 
 
 @pytest.fixture
@@ -49,6 +57,10 @@ def test_task(client, token):
 
 @pytest.fixture(scope="function", autouse=True)
 def clean_db():
+    with test_engine.connect() as connection:
+        connection.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+        connection.commit()
+
     # SETUP: Create all tables to ensure they exist
     Base.metadata.create_all(bind=test_engine)
 
