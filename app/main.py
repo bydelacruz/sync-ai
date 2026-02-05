@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from .database import engine, Base, get_db
-from .schemas import Task, UserCreate, User, TaskCreate
+from .schemas import Task, UserCreate, User, TaskCreate, SearchRequest
 from sqlalchemy.orm import Session
 from . import crud
 from .services import get_ai_summary
@@ -104,3 +104,15 @@ def delete_task(
         raise HTTPException(status_code=404, detail="Task not found")
 
     return deleted_task
+
+
+@app.post("/search", response_model=list[Task])
+async def search_tasks(
+    search_request: SearchRequest,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user),
+):
+    vectorized = get_embedding(search_request.search_term)
+    tasks = crud.search_tasks(db, current_user, vectorized)
+
+    return tasks

@@ -35,3 +35,7 @@ class User(BaseModel):
     tasks: list[Task]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class SearchRequest(BaseModel):
+    search_term: str

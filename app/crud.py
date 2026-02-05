@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from .models import TaskDB, UserDB
 from .schemas import Task, UserCreate
 from .auth import get_password_hash, verify_password
+from .ai import get_embedding
 
 
 def create_user(db: Session, user: UserCreate):
@@ -79,3 +80,11 @@ def mark_complete(db: Session, task_id: int, user: UserDB):
     db.refresh(task)
 
     return task
+
+
+def search_tasks(db: Session, user: UserDB, query_vector: list[float]):
+    query = db.query(TaskDB).order_by(TaskDB.embeddings.cosine_distance(query_vector))
+
+    query = query.filter(TaskDB.owner_id == user.id)
+
+    return query.all()
