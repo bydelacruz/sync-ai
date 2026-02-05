@@ -1,7 +1,9 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from .database import engine, Base, get_db
 from .schemas import Task, UserCreate, User, TaskCreate, SearchRequest
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from . import crud
 from .services import get_ai_summary
 from .auth import create_access_token, get_current_user
@@ -9,10 +11,18 @@ from .models import UserDB
 from .ai import get_embedding
 
 
-# create tables
-Base.metadata.create_all(bind=engine)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    try:
+        with engine.begin() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
 
-app = FastAPI()
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"starup database error: {e}")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
