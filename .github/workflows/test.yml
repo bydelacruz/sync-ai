@@ -20,4 +20,4 @@ jobs:
           ACCESS_TOKEN_EXPIRE_MINUTES: 30
           ALGORITHM: HS256
           SECRET_KEY: ${{ secrets.SECRET_KEY }}
-          GEMINI_API_KEY: ${{ GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
