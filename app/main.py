@@ -21,6 +21,8 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"starup database error: {e}")
 
+    yield
+
 
 app = FastAPI(lifespan=lifespan)
 

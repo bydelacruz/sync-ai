@@ -112,6 +112,34 @@ def test_filter_tasks(client, token):
     assert res.json()[0]["title"] == "get coffee"
 
 
+def test_search_privacy(client, test_task, attacker_token):
+    task = test_task
+
+    res = client.post(
+        "/search",
+        json={"search_term": "i am hungry"},
+        headers={"Authorization": f"Bearer {attacker_token}"},
+    )
+
+    assert res.status_code == 200
+    assert res.json() == []
+
+
+def test_search(client, test_task, token):
+    task = test_task
+
+    res = client.post(
+        "/search",
+        json={"search_term": "im hungry"},
+        headers={"Authorization": f"Bearer {token}"},
+    )
+
+    assert res.status_code == 200
+    data = res.json()
+    assert len(data) > 0
+    assert data[0]["title"] == "groceries"
+
+
 # --------User tests----------
 
 
