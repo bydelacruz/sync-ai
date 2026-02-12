@@ -86,8 +86,19 @@ def mark_complete(db: Session, task_id: int, user: UserDB):
 
 
 def search_tasks(db: Session, user: UserDB, query_vector: list[float]):
-    query = db.query(TaskDB).order_by(TaskDB.embeddings.cosine_distance(query_vector))
+    # 1. Calculate the distance (0 = identical, 2 = opposite)
+    distance = TaskDB.embeddings.cosine_distance(query_vector)
 
-    query = query.filter(TaskDB.owner_id == user.id)
+    # 2. Build the query
+    # We filter by owner FIRST for security
+    # Then we filter by distance < 0.7 to remove irrelevant "noise"
+    results = (
+        db.query(TaskDB)
+        .filter(TaskDB.owner_id == user.id)
+        .filter(distance < 0.22)
+        .order_by(distance)
+        .limit(5)
+        .all()
+    )
 
-    return query.all()
+    return results
