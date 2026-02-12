@@ -2,7 +2,10 @@ from sqlalchemy.orm import Session
 from .models import TaskDB, UserDB
 from .schemas import Task, UserCreate
 from .auth import get_password_hash, verify_password
-from .ai import get_embedding
+
+
+def get_user_by_username(db: Session, username: str):
+    return db.query(UserDB).filter(UserDB.username == username).first()
 
 
 def create_user(db: Session, user: UserCreate):

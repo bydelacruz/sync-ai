@@ -21,5 +21,5 @@ class UserDB(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     tasks = relationship("TaskDB", back_populates="user")
-    username = Column(String)
+    username = Column(String, unique=True, index=True)
     hashed_password = Column(String)

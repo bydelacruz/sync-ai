@@ -34,6 +34,11 @@ def health_check():
 
 @app.post("/users", response_model=User)
 async def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    # check if user already exists
+    db_user = crud.get_user_by_username(db, username=user.username)
+    if db_user:
+        raise HTTPException(status_code=400, detail="Username already registered")
+
     new_user = crud.create_user(db, user)
 
     return new_user
