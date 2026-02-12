@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import CreateTask from "./CreateTask";
-import { CheckCircle2, Circle, Trash2, Calendar, Loader2, Search, X } from "lucide-react";
+import TaskModal from "./TaskModal";
+import { Check, Circle, Trash2, Search, X, Loader2 } from "lucide-react";
 
 export default function TaskBoard() {
   const { token } = useAuth();
@@ -9,33 +10,25 @@ export default function TaskBoard() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  
+  // State for the selected task (Modal)
+  const [selectedTask, setSelectedTask] = useState(null);
 
-  // 1. Fetch Tasks (All or Search)
   const fetchTasks = async (query = "") => {
     setIsLoading(true);
     try {
-      let url = "/tasks";
+      let url = query.trim() ? "/search" : "/tasks";
       let options = {
-        headers: { Authorization: `Bearer ${token}` },
+        method: query.trim() ? "POST" : "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: query.trim() ? JSON.stringify({ search_term: query }) : null,
       };
-
-      // If we have a query, switch to the Search Endpoint
-      if (query.trim()) {
-        url = "/search";
-        options = {
-          method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}` 
-          },
-          body: JSON.stringify({ search_term: query }),
-        };
-      }
 
       const response = await fetch(url, options);
       if (!response.ok) throw new Error("Failed to fetch tasks");
-
       const data = await response.json();
       setTasks(data);
     } catch (err) {
@@ -45,22 +38,15 @@ export default function TaskBoard() {
     }
   };
 
-  // Initial load
-  useEffect(() => {
-    fetchTasks();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchTasks(); }, []);
 
-  // Handle Search Submit
   const handleSearch = (e) => {
     e.preventDefault();
-    setIsSearching(!!searchQuery);
     fetchTasks(searchQuery);
   };
 
-  // Clear Search
   const clearSearch = () => {
     setSearchQuery("");
-    setIsSearching(false);
     fetchTasks("");
   };
 
@@ -68,8 +54,8 @@ export default function TaskBoard() {
     setTasks([newTask, ...tasks]);
   };
 
-  // ... (toggleTask and deleteTask remain the same as before) ...
-  const toggleTask = async (taskId, isCompleted) => {
+  const toggleTask = async (e, taskId, isCompleted) => {
+    e.stopPropagation(); // Stop card click
     setTasks(tasks.map(t => t.id === taskId ? { ...t, status: isCompleted ? "pending" : "completed" } : t));
     try {
       await fetch(`/tasks/${taskId}/${isCompleted ? "pending" : "complete"}`, {
@@ -79,7 +65,8 @@ export default function TaskBoard() {
     } catch (err) { fetchTasks(); }
   };
 
-  const deleteTask = async (taskId) => {
+  const deleteTask = async (e, taskId) => {
+    e.stopPropagation(); // Stop card click
     setTasks(tasks.filter(t => t.id !== taskId));
     try {
       await fetch(`/tasks/${taskId}`, {
@@ -88,31 +75,36 @@ export default function TaskBoard() {
       });
     } catch (err) { fetchTasks(); }
   };
-  // ... (End of helper functions) ...
 
   if (error) return <div className="text-red-400 text-center p-8">Error: {error}</div>;
 
   return (
-    <div className="space-y-6">
-      
+    <div className="max-w-5xl mx-auto space-y-8">
+      {/* Detail Modal */}
+      <TaskModal 
+        task={selectedTask} 
+        isOpen={!!selectedTask} 
+        onClose={() => setSelectedTask(null)} 
+      />
+
+      {/* Header Controls */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <CreateTask onTaskCreated={handleTaskCreated} />
 
-        {/* --- SEARCH BAR --- */}
-        <form onSubmit={handleSearch} className="relative w-full md:w-96">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500" />
+        <form onSubmit={handleSearch} className="relative w-full md:w-80 group">
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-500 group-focus-within:text-indigo-400 transition-colors" />
           <input 
             type="text"
-            placeholder="Search tasks using AI..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg bg-zinc-900 border border-zinc-700 pl-10 pr-10 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition-all"
+            className="w-full h-10 rounded-lg bg-zinc-900 border border-zinc-800 pl-10 pr-10 text-sm text-zinc-100 placeholder-zinc-500 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 focus:bg-zinc-900 focus:outline-none transition-all"
           />
           {searchQuery && (
             <button 
               type="button"
               onClick={clearSearch}
-              className="absolute right-3 top-2.5 text-zinc-500 hover:text-zinc-300"
+              className="absolute right-3 top-2.5 text-zinc-500 hover:text-white"
             >
               <X className="h-4 w-4" />
             </button>
@@ -120,63 +112,56 @@ export default function TaskBoard() {
         </form>
       </div>
 
+      {/* Task Grid */}
       {isLoading ? (
-        <div className="flex justify-center p-12">
-          <Loader2 className="animate-spin text-indigo-500 h-8 w-8" />
-        </div>
+        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-zinc-600" /></div>
       ) : tasks.length === 0 ? (
-        <div className="text-center py-12 border-2 border-dashed border-zinc-800 rounded-xl text-zinc-500">
-          {isSearching ? (
-             <p>No tasks found matching "{searchQuery}". Try a different concept!</p>
-          ) : (
-             <p>No tasks found. Create one to get started!</p>
-          )}
+        <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-dashed border-zinc-800">
+           <p className="text-zinc-500">No tasks found.</p>
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {tasks.map((task) => (
             <div 
               key={task.id} 
-              className={`p-4 rounded-xl border transition-all hover:shadow-lg hover:shadow-indigo-500/10 flex flex-col justify-between h-full ${
-                task.status === "completed" 
-                  ? "bg-zinc-900/30 border-zinc-800 opacity-60" 
-                  : "bg-zinc-900 border-zinc-700"
-              }`}
+              onClick={() => setSelectedTask(task)} // <--- CLICK TO OPEN
+              className={`
+                group relative p-5 rounded-xl border cursor-pointer transition-all duration-200
+                hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20
+                ${task.status === "completed" 
+                  ? "bg-zinc-900/40 border-zinc-800/50" 
+                  : "bg-zinc-900 border-zinc-800 hover:border-zinc-700"
+                }
+              `}
             >
-              <div>
-                <div className="flex justify-between items-start mb-3">
-                  <button 
-                    onClick={() => toggleTask(task.id, task.status === "completed")}
-                    className={`flex items-center justify-center p-2 rounded-lg transition-colors ${
-                      task.status === "completed" ? "text-green-500 hover:text-green-400" : "text-zinc-500 hover:text-indigo-400"
-                    }`}
+              {/* Card Header */}
+              <div className="flex justify-between items-start mb-3">
+                <div className={`font-semibold text-base pr-4 line-clamp-1 ${task.status === "completed" ? "text-zinc-500 line-through decoration-zinc-700" : "text-zinc-100"}`}>
+                  {task.title}
+                </div>
+                
+                {/* Actions (Absolute positioned for cleaner layout) */}
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 bg-zinc-900 pl-2 shadow-[-10px_0_10px_0_rgba(24,24,27,1)]">
+                   <button 
+                    onClick={(e) => toggleTask(e, task.id, task.status === "completed")}
+                    className={`p-1.5 rounded-md hover:bg-zinc-800 transition-colors ${task.status === 'completed' ? 'text-green-500' : 'text-zinc-500'}`}
                   >
-                    {task.status === "completed" ? <CheckCircle2 /> : <Circle />}
+                    {task.status === "completed" ? <Check className="w-4 h-4" /> : <Circle className="w-4 h-4" />}
                   </button>
-                  
                   <button 
-                    onClick={() => deleteTask(task.id)}
-                    className="p-2 text-zinc-600 hover:text-red-400 transition-colors"
+                    onClick={(e) => deleteTask(e, task.id)}
+                    className="p-1.5 rounded-md text-zinc-500 hover:text-red-400 hover:bg-zinc-800 transition-colors"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
-
-                <h3 className={`font-semibold text-lg mb-1 ${task.status === "completed" ? "line-through text-zinc-500" : "text-zinc-100"}`}>
-                  {task.title}
-                </h3>
-                
-                {/* --- DISPLAY SUMMARY INSTEAD OF DESCRIPTION --- */}
-                <p className="text-sm text-zinc-400 line-clamp-3 mb-4">
-                  {task.summary || task.description} 
-                </p>
               </div>
 
-              <div className="flex items-center text-xs text-zinc-600 font-mono mt-auto pt-4 border-t border-zinc-800/50">
-                <Calendar className="h-3 w-3 mr-1" />
-                {new Date(task.created_at || Date.now()).toLocaleDateString()}
+              {/* Summary Preview */}
+              <p className={`text-sm leading-relaxed line-clamp-3 mb-4 ${task.status === "completed" ? "text-zinc-600" : "text-zinc-400"}`}>
+                {task.summary || task.description}
+              </p>
               </div>
-            </div>
           ))}
         </div>
       )}

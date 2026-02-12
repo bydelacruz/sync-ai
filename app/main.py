@@ -64,7 +64,10 @@ async def create_task(
 ):
     ai_summary = await get_ai_summary(task.description)
     task.summary = ai_summary
-    embeddings = get_embedding(task.title)
+
+    combine_text = f"{task.title}: {task.description}"
+    embeddings = get_embedding(combine_text)
+
     new_task = crud.create_task(db, task, current_user, embeddings)
 
     return new_task

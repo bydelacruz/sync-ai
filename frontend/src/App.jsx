@@ -1,14 +1,18 @@
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./Login";
-import TaskBoard from "./TaskBoard";
-import { LogOut } from "lucide-react";
+import Layout from "./Layout";
+import TaskBoard from "./TaskBoard"; // <--- Make sure this import matches your file structure
+import { Loader2 } from "lucide-react";
 
-// Inner component that consumes the context
 function AppContent() {
-  const { token, logout, isLoading } = useAuth();
+  const { token, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-zinc-600" />
+      </div>
+    );
   }
 
   if (!token) {
@@ -16,31 +20,16 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-8">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-            My Dashboard
-          </h1>
-          <button 
-            onClick={logout}
-            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            Sign out
-          </button>
-        </div>
-        
-        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-8 text-center">
-            <TaskBoard />
-        </div>
-
+    <Layout>
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-white tracking-tight">My Tasks</h1>
+        <p className="text-zinc-400 mt-1">Manage your intelligent task queue.</p>
       </div>
-    </div>
+      <TaskBoard />
+    </Layout>
   );
 }
 
-// Main component that provides the context
 export default function App() {
   return (
     <AuthProvider>
