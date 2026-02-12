@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { User, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useAuth } from "./context/AuthContext";
 
-export default function Login({ onLogin }) {
+export default function Login() {
+  const { login } = useAuth()
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +29,7 @@ export default function Login({ onLogin }) {
 
       const data = await response.json();
       // Pass the token up to the parent component
-      onLogin(data.access_token);
+      login(data.access_token);
       
     } catch (err) {
       setError(err.message);

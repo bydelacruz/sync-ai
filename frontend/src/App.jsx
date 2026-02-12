@@ -1,34 +1,53 @@
-import { useState } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./Login";
+import { LogOut } from "lucide-react";
 
-function App() {
-  const [token, setToken] = useState(null);
+// Inner component that consumes the context
+function AppContent() {
+  const { token, logout, isLoading } = useAuth();
 
-  const handleLogin = (accessToken) => {
-    setToken(accessToken);
-    console.log("Logged in! Token:", accessToken);
-  };
+  if (isLoading) {
+    return <div className="min-h-screen bg-zinc-950 flex items-center justify-center text-white">Loading...</div>;
+  }
 
   if (!token) {
-    return <Login onLogin={handleLogin} />;
+    return <Login />;
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center">
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-green-500">Access Granted! 🔓</h1>
-        <p className="text-zinc-400 break-all max-w-lg p-4 bg-zinc-900 rounded-lg border border-zinc-800 font-mono text-xs">
-          {token}
-        </p>
-        <button 
-          onClick={() => setToken(null)}
-          className="px-4 py-2 bg-red-600 rounded hover:bg-red-500"
-        >
-          Logout
-        </button>
+    <div className="min-h-screen bg-zinc-950 text-white p-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8 border-b border-zinc-800 pb-4">
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+            My Dashboard
+          </h1>
+          <button 
+            onClick={logout}
+            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </button>
+        </div>
+        
+        <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-8 text-center">
+            <h2 className="text-xl font-semibold mb-2">Welcome Back! 👋</h2>
+            <p className="text-zinc-400">Your token is secure and ready to fetch tasks.</p>
+            <div className="mt-4 p-4 bg-zinc-950 rounded-lg border border-zinc-800 font-mono text-xs break-all text-zinc-500">
+                {token}
+            </div>
+        </div>
+
       </div>
     </div>
   );
 }
 
-export default App;
+// Main component that provides the context
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
