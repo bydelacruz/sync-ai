@@ -153,6 +153,21 @@ def test_create_user(client):
     assert "hashed_password" not in res.json()
 
 
+def test_create_existing_user(client):
+    user = {"username": "benny", "password": "password123"}
+
+    # create user for first time
+    res1 = client.post("/users", json=user)
+    assert res1.status_code == 200
+
+    # try to create the same user again (should fail)
+    res2 = client.post("/users", json=user)
+
+    # verify we get a 400 error
+    assert res2.status_code == 400
+    assert res2.json()["detail"] == "Username already registered"
+
+
 def test_user_login(client):
     user = {"username": "benny", "password": "password123"}
     res = client.post("/users", json=user)
