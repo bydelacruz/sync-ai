@@ -15,12 +15,13 @@ def get_embedding(text: str):
     genai.configure(api_key=api_key)
 
     # We need to specify the model.
-    model = "models/text-embedding-004"
+    model = "models/gemini-embedding-001"
 
     result = genai.embed_content(
         model=model,
         content=text,
         task_type="retrieval_document",
+        output_dimensionality=768,
     )
 
     return result["embedding"]

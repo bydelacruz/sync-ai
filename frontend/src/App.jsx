@@ -1,5 +1,6 @@
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./Login";
+import TaskBoard from "./TaskBoard";
 import { LogOut } from "lucide-react";
 
 // Inner component that consumes the context
@@ -31,11 +32,7 @@ function AppContent() {
         </div>
         
         <div className="bg-zinc-900/50 rounded-xl border border-zinc-800 p-8 text-center">
-            <h2 className="text-xl font-semibold mb-2">Welcome Back! 👋</h2>
-            <p className="text-zinc-400">Your token is secure and ready to fetch tasks.</p>
-            <div className="mt-4 p-4 bg-zinc-950 rounded-lg border border-zinc-800 font-mono text-xs break-all text-zinc-500">
-                {token}
-            </div>
+            <TaskBoard />
         </div>
 
       </div>
