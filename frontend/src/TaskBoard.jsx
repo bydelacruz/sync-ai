@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import CreateTask from "./CreateTask";
 import TaskModal from "./TaskModal";
-import { Check, Circle, Trash2, Search, X, Loader2 } from "lucide-react";
+import TaskSkeleton from "./TaskSkeleton";
+import { Check, Circle, Trash2, Search, X } from "lucide-react";
 
 export default function TaskBoard() {
   const { token } = useAuth();
@@ -87,7 +88,7 @@ export default function TaskBoard() {
         onClose={() => setSelectedTask(null)} 
       />
 
-      {/* Header Controls */}
+      {/* Header Controls (Always Visible) */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
         <CreateTask onTaskCreated={handleTaskCreated} />
 
@@ -112,9 +113,9 @@ export default function TaskBoard() {
         </form>
       </div>
 
-      {/* Task Grid */}
+      {/* --- THE CONTENT AREA --- */}
       {isLoading ? (
-        <div className="flex justify-center p-12"><Loader2 className="animate-spin text-zinc-600" /></div>
+        <TaskSkeleton />
       ) : tasks.length === 0 ? (
         <div className="text-center py-20 bg-zinc-900/30 rounded-2xl border border-dashed border-zinc-800">
            <p className="text-zinc-500">No tasks found.</p>
@@ -124,7 +125,7 @@ export default function TaskBoard() {
           {tasks.map((task) => (
             <div 
               key={task.id} 
-              onClick={() => setSelectedTask(task)} // <--- CLICK TO OPEN
+              onClick={() => setSelectedTask(task)}
               className={`
                 group relative p-5 rounded-xl border cursor-pointer transition-all duration-200
                 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/20
@@ -134,13 +135,11 @@ export default function TaskBoard() {
                 }
               `}
             >
-              {/* Card Header */}
               <div className="flex justify-between items-start mb-3">
                 <div className={`font-semibold text-base pr-4 line-clamp-1 ${task.status === "completed" ? "text-zinc-500 line-through decoration-zinc-700" : "text-zinc-100"}`}>
                   {task.title}
                 </div>
                 
-                {/* Actions (Absolute positioned for cleaner layout) */}
                 <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 bg-zinc-900 pl-2 shadow-[-10px_0_10px_0_rgba(24,24,27,1)]">
                    <button 
                     onClick={(e) => toggleTask(e, task.id, task.status === "completed")}
@@ -157,11 +156,10 @@ export default function TaskBoard() {
                 </div>
               </div>
 
-              {/* Summary Preview */}
               <p className={`text-sm leading-relaxed line-clamp-3 mb-4 ${task.status === "completed" ? "text-zinc-600" : "text-zinc-400"}`}>
                 {task.summary || task.description}
               </p>
-              </div>
+            </div>
           ))}
         </div>
       )}
