@@ -1,8 +1,7 @@
 import { useAuth } from "./context/AuthContext";
-import { Command, LogOut, User } from "lucide-react";
 
 export default function Layout({ children }) {
-  const { logout, token } = useAuth();
+  const { logout } = useAuth();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans selection:bg-indigo-500/30">

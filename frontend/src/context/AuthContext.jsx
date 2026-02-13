@@ -28,7 +28,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
-    localStorage.removeItem('access_Token');
+    localStorage.removeItem('access_token');
     setToken(null);
   };
 
