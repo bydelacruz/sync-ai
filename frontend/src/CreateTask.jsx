@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "./context/AuthContext";
 import { Plus, Loader2, X, AlignLeft, Type } from "lucide-react";
+import API_URL from "./api";
 
 export default function CreateTask({ onTaskCreated }) {
   const { token } = useAuth();
@@ -14,7 +15,7 @@ export default function CreateTask({ onTaskCreated }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/tasks", {
+      const response = await fetch(`${API_URL}/tasks`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

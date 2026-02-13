@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "./context/AuthContext";
 import { Command, ArrowRight, Loader2, UserPlus } from "lucide-react";
+import API_URL from "./api"
 
 export default function Login() {
   const { login } = useAuth();
@@ -21,7 +22,7 @@ export default function Login() {
     try {
       if (isLogin) {
         // --- LOGIN MODE ---
-        const response = await fetch("/users/login", {
+        const response = await fetch(`${API_URL}/users/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
@@ -34,7 +35,7 @@ export default function Login() {
       } else {
         // --- SIGNUP MODE ---
         // 1. Create User
-        const createRes = await fetch("/users", {
+        const createRes = await fetch(`${API_URL}/users`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),
@@ -48,7 +49,7 @@ export default function Login() {
         // 2. Auto-Login after success
         setSuccessMsg("Account created! Logging you in...");
         
-        const loginRes = await fetch("/users/login", {
+        const loginRes = await fetch(`${API_URL}/users/login`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ username, password }),

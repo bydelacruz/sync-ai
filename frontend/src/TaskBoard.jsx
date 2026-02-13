@@ -4,6 +4,7 @@ import CreateTask from "./CreateTask";
 import TaskModal from "./TaskModal";
 import TaskSkeleton from "./TaskSkeleton";
 import { Check, Circle, Trash2, Search, X } from "lucide-react";
+import API_URL from "./api";
 
 export default function TaskBoard() {
   const { token, logout } = useAuth();
@@ -18,7 +19,7 @@ export default function TaskBoard() {
   const fetchTasks = async (query = "") => {
     setIsLoading(true);
     try {
-      let url = query.trim() ? "/search" : "/tasks";
+      let url = query.trim() ? `${API_URL}/search` : `${API_URL}/tasks`;
       let options = {
         method: query.trim() ? "POST" : "GET",
         headers: { 
@@ -65,7 +66,7 @@ export default function TaskBoard() {
     e.stopPropagation(); // Stop card click
     setTasks(tasks.map(t => t.id === taskId ? { ...t, status: isCompleted ? "pending" : "completed" } : t));
     try {
-      await fetch(`/tasks/${taskId}/${isCompleted ? "pending" : "complete"}`, {
+      await fetch(`${API_URL}/tasks/${taskId}/${isCompleted ? "pending" : "complete"}`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -76,7 +77,7 @@ export default function TaskBoard() {
     e.stopPropagation(); // Stop card click
     setTasks(tasks.filter(t => t.id !== taskId));
     try {
-      await fetch(`/tasks/${taskId}`, {
+      await fetch(`${API_URL}/tasks/${taskId}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
