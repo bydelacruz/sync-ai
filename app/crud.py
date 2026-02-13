@@ -95,7 +95,7 @@ def search_tasks(db: Session, user: UserDB, query_vector: list[float]):
     results = (
         db.query(TaskDB)
         .filter(TaskDB.owner_id == user.id)
-        .filter(distance < 0.45)
+        .filter(distance < 0.40)
         .order_by(distance)
         .limit(5)
         .all()
