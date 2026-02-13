@@ -145,7 +145,7 @@ async def search_tasks(
     db: Session = Depends(get_db),
     current_user: UserDB = Depends(get_current_user),
 ):
-    vectorized = get_embedding(search_request.search_term)
+    vectorized = get_embedding(search_request.search_term, task_type="retrieval_query")
     tasks = crud.search_tasks(db, current_user, vectorized)
 
     return tasks
