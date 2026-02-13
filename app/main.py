@@ -9,6 +9,8 @@ from .services import get_ai_summary
 from .auth import create_access_token, get_current_user
 from .models import UserDB
 from .ai import get_embedding
+import os
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager
@@ -25,6 +27,22 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Get the Frontend URL from env, default to localhost for development
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
+origins = [
+    "http://localhost:5173",  # Local development
+    FRONTEND_URL,  # Production URL
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
