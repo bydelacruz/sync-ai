@@ -37,93 +37,79 @@ Unlike standard To-Do lists that rely on exact keyword matches, Sync AI utilizes
 - **Embeddings:** Google Gemini (`models/gemini-embedding-001`)
 - **Summarization:** Groq (Llama 3) / Google Gemini
 
-## Prerequisites
+---
 
-- **Docker** (for the PostgreSQL + pgvector database)
-- **Python 3.10+** & **Poetry** (for the backend)
-- **Node.js 18+** & **npm** (for the frontend)
+## Quick Start (Docker)
+
+The easiest way to run the application is using Docker Compose. This spins up the Database, Backend, and Frontend in a single command.
+
+### Prerequisites
+
+- **Docker Desktop** installed and running.
+- An `.env` file with your API keys (see below).
+
+### 1. Configure Environment
+
+Create a `.env` file in the root directory:
+
+```ini
+DATABASE_URL=postgresql://user:password@db/sync_ai_db
+SECRET_KEY=your_super_secret_key
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# AI Keys (Required for Summarization & Search)
+GROQ_API_KEY=your_groq_api_key
+GEMINI_API_KEY=your_gemini_api_key
+```
+
+### 2. Run the App
+
+Run this command in the root directory:
+
+```bash
+docker compose up --build
+```
+
+Access the application:
+
+- **Frontend App:** http://localhost:5173
+- **Backend API Docs:** http://localhost:8000/docs
 
 ---
 
-## Setup & Installation
+## Local Development (Manual Setup)
+
+If you want to run the services individually for development purposes:
 
 ### 1. Start the Database
 
-We use a specialized Docker image that includes the `pgvector` extension for AI math operations.
-
 ```bash
-# Run the database container
-docker run --name task_db \
+docker run --name sync_ai_db \
   -e POSTGRES_PASSWORD=password \
-  -e POSTGRES_DB=task_db \
+  -e POSTGRES_USER=user \
+  -e POSTGRES_DB=sync_ai_db \
   -p 5432:5432 \
   -d pgvector/pgvector:pg15
 ```
 
 ### 2. Backend Setup
 
-Navigate to the root directory (or `/backend` if you structured it that way).
-
 ```bash
-# Install Python dependencies
+# Install dependencies
 poetry install
 
-# Create .env file
-touch .env
-```
-
-**Add the following to your `.env` file:**
-
-```ini
-DATABASE_URL=postgresql://postgres:password@localhost/task_db
-SECRET_KEY=your_super_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-
-# AI Keys
-GROQ_API_KEY=your_groq_api_key
-GEMINI_API_KEY=your_google_gemini_key
+# Run Server
+poetry run uvicorn app.main:app --reload
 ```
 
 ### 3. Frontend Setup
 
-Navigate to the `frontend` directory.
-
 ```bash
 cd frontend
-
-# Install Node dependencies
 npm install
-```
-
----
-
-## Running the Application
-
-You will need three terminal windows running simultaneously:
-
-**Terminal 1: Database**
-
-```bash
-docker start task_db
-```
-
-**Terminal 2: Backend API**
-
-```bash
-poetry run uvicorn app.main:app --reload
-```
-
-_API will run at: http://127.0.0.1:8000_
-
-**Terminal 3: Frontend UI**
-
-```bash
-cd frontend
 npm run dev
 ```
-
-_UI will run at: http://localhost:5173_
 
 ---
 
@@ -153,11 +139,8 @@ http://127.0.0.1:8000/docs
 > **⚠️ Note on Authentication:**
 > The `/users/login` endpoint expects a **JSON body**, whereas the default Swagger UI "Authorize" button sends **Form Data**.
 >
-> To test authentication:
+> To test authentication via API:
 >
-> 1.  Use **HTTPie**, **Postman**, or **cURL** to hit the login endpoint:
->     ```bash
->     http POST [http://127.0.0.1:8000/users/login](http://127.0.0.1:8000/users/login) username=benny password=password123
->     ```
+> 1.  POST to `/users/login` with JSON body: `{"username": "...", "password": "..."}`
 > 2.  Copy the `access_token` from the response.
-> 3.  Click the **Authorize** button in Swagger UI and paste the token (Value: `Bearer <your_token>`) to unlock the protected endpoints.
+> 3.  Click **Authorize** in Swagger UI and paste the token (Value: `Bearer <your_token>`).

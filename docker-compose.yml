@@ -10,9 +10,40 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: sync_ai_db
     ports:
-      - "5432:5432" # maps the containers port to the computers port
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+
+  # service 2: Backend API (FastAPI)
+  backend:
+    build: .
+    container_name: sync_ai_backend
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://user:password@db:5432/sync_ai_db
+      - SECRET_KEY=${SECRET_KEY}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - .:/app # Syncs your code so you can still edit without rebuilding
+
+  # 3. Frontend UI (React)
+  frontend:
+    build: ./frontend
+    container_name: sync_ai_frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:5173"
+    environment:
+      # Tell Vite to talk to the backend container
+      - VITE_API_URL=http://backend:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # Prevent host node_modules from overriding container
 
 volumes:
   postgres_data:

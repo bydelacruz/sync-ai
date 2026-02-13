@@ -6,7 +6,7 @@ import TaskSkeleton from "./TaskSkeleton";
 import { Check, Circle, Trash2, Search, X } from "lucide-react";
 
 export default function TaskBoard() {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,6 +29,12 @@ export default function TaskBoard() {
       };
 
       const response = await fetch(url, options);
+      
+      if (response.status == 401) {
+        logout();
+        return;
+      }
+
       if (!response.ok) throw new Error("Failed to fetch tasks");
       const data = await response.json();
       setTasks(data);
