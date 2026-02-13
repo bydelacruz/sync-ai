@@ -130,7 +130,7 @@ def test_search(client, test_task, token):
 
     res = client.post(
         "/search",
-        json={"search_term": "food"},
+        json={"search_term": "milk"},
         headers={"Authorization": f"Bearer {token}"},
     )
 
