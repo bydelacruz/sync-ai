@@ -30,6 +30,7 @@ Unlike standard To-Do lists that rely on exact keyword matches, Sync AI utilizes
 - **Framework:** FastAPI
 - **Database:** PostgreSQL with `pgvector` extension
 - **ORM:** SQLAlchemy
+- **Migrations:** Alembic
 - **Testing:** Pytest
 
 ### Artificial Intelligence
@@ -41,7 +42,7 @@ Unlike standard To-Do lists that rely on exact keyword matches, Sync AI utilizes
 
 ## Quick Start (Docker)
 
-The easiest way to run the application is using Docker Compose. This spins up the Database, Backend, and Frontend in a single command.
+The easiest way to run the application is using Docker Compose. This spins up the Database, Backend, and Frontend in a single command and **automatically applies database migrations**.
 
 ### Prerequisites
 
@@ -80,7 +81,7 @@ Access the application:
 
 ## Local Development (Manual Setup)
 
-If you want to run the services individually for development purposes:
+If you want to run the services individually for development purposes, you must handle database migrations manually.
 
 ### 1. Start the Database
 
@@ -99,6 +100,9 @@ docker run --name sync_ai_db \
 # Install dependencies
 poetry install
 
+# Run Database Migrations (Important!)
+poetry run alembic upgrade head
+
 # Run Server
 poetry run uvicorn app.main:app --reload
 ```
@@ -109,6 +113,25 @@ poetry run uvicorn app.main:app --reload
 cd frontend
 npm install
 npm run dev
+```
+
+---
+
+## Database Management (Alembic)
+
+We use Alembic to handle database schema changes.
+
+**To create a new migration:**
+If you modify `app/models.py`, generate a migration file:
+
+```bash
+poetry run alembic revision --autogenerate -m "describe your change"
+```
+
+**To apply migrations:**
+
+```bash
+poetry run alembic upgrade head
 ```
 
 ---
