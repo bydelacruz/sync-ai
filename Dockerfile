@@ -21,8 +21,12 @@ RUN poetry install --no-interaction --no-ansi --no-root
 # Copy the rest of the application code
 COPY . /app
 
+# Copy the entrypoint script and make it executable
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 # Expose the port
 EXPOSE 8000
 
 # Command to run the app
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["/app/entrypoint.sh"]

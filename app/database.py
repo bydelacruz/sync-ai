@@ -1,14 +1,10 @@
-import os
-from dotenv import load_dotenv
+from .config import settings
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-load_dotenv()
 
-# connection String
-DATABASE_URL = os.environ.get("DATABASE_URL")
 # creat the engine
-engine = create_engine(DATABASE_URL)
+engine = create_engine(settings.DATABASE_URL)
 # create the session local class
 SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
 # create the base class

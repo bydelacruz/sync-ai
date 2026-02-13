@@ -1,12 +1,9 @@
-import os
-from dotenv import load_dotenv
+from .config import settings
 from groq import AsyncGroq
 
-# load environment variables from .env file
-load_dotenv()
 
 # create the Async Groq client
-client = AsyncGroq(api_key=os.environ.get("GROQ_API_KEY"))
+client = AsyncGroq(api_key=settings.GROQ_API_KEY)
 
 
 async def get_ai_summary(text: str):

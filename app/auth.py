@@ -1,5 +1,3 @@
-import os
-from dotenv import load_dotenv
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import jwt
@@ -8,13 +6,13 @@ from sqlalchemy.orm import Session
 from fastapi import Depends, HTTPException
 from .models import UserDB
 from .database import get_db
+from .config import settings
 
-load_dotenv()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-ACCESS_TOKEN_EXPIRE_MINUTES = os.environ.get("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-SECRET_KEY = os.environ.get("SECRET_KEY", "temporarysupersemisecretkey")
-ALGORITHM = os.environ.get("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
 oauth2_schema = OAuth2PasswordBearer(tokenUrl="users/login")
 

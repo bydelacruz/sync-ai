@@ -9,8 +9,8 @@ from .services import get_ai_summary
 from .auth import create_access_token, get_current_user
 from .models import UserDB
 from .ai import get_embedding
-import os
 from fastapi.middleware.cors import CORSMiddleware
+from .config import settings
 
 
 @asynccontextmanager
@@ -18,27 +18,22 @@ async def lifespan(app: FastAPI):
     try:
         with engine.begin() as conn:
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
-
-        Base.metadata.create_all(bind=engine)
     except Exception as e:
-        print(f"starup database error: {e}")
+        print(f"startup database error: {e}")
 
     yield
 
 
 app = FastAPI(lifespan=lifespan)
 
-# Get the Frontend URL from env, default to localhost for development
-FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-
 origins = [
     "http://localhost:5173",  # Local development
-    FRONTEND_URL,  # Production URL
+    settings.FRONTEND_URL,  # Production URL
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=[origins],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
