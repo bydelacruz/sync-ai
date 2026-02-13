@@ -20,7 +20,7 @@ TestingSessionLocal = sessionmaker(bind=test_engine, autocommit=False, autoflush
 @pytest.fixture(autouse=True)
 def mock_ai_embedding():
     with patch("app.main.get_embedding") as mock:
-        mock.return_value = [0.0] * 768
+        mock.return_value = [0.1] * 768
         yield mock
 
 
