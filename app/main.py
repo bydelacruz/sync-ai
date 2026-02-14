@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends, HTTPException
 from .database import engine, Base, get_db
-from .schemas import Task, UserCreate, User, TaskCreate, SearchRequest
+from .schemas import Task, UserCreate, User, TaskCreate, SearchRequest, TaskUpdate
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from . import crud
@@ -79,7 +79,7 @@ async def create_task(
     task.summary = ai_summary
 
     combine_text = f"{task.title}: {task.description}"
-    embeddings = get_embedding(combine_text)
+    embeddings = get_embedding(combine_text, task_type="retrieval_document")
 
     new_task = crud.create_task(db, task, current_user, embeddings)
 
@@ -122,6 +122,33 @@ async def mark_complete(
     if not task:
         raise HTTPException(status_code=404, detail="Task not found")
 
+    return task
+
+
+@app.put("/tasks/{task_id}/pending", response_model=Task)
+async def mark_pending(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user),
+):
+    task = crud.mark_pending(db, task_id, current_user)
+
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+
+    return task
+
+
+@app.put("/tasks/{task_id}", response_model=Task)
+async def update_task(
+    task_id: int,
+    task_update: TaskUpdate,
+    db: Session = Depends(get_db),
+    current_user: UserDB = Depends(get_current_user),
+):
+    task = await crud.update_task(db, task_id, task_update, current_user)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
     return task
 
 

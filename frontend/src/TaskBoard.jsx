@@ -48,6 +48,15 @@ export default function TaskBoard() {
 
   useEffect(() => { fetchTasks(); }, []);
 
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim() === "") {
+      fetchTasks()
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     fetchTasks(searchQuery);
@@ -60,6 +69,37 @@ export default function TaskBoard() {
 
   const handleTaskCreated = (newTask) => {
     setTasks([newTask, ...tasks]);
+  };
+
+  const updateTask = async (taskId, updatedData) => {
+    // optimistic UI update
+    setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? {...t, ...updatedData} : t))
+
+    // also update the selectedtask so the modaldoesnt show old data
+    if (selectedTask && selectedTask.id === taskId) {
+      setSelectedTask(prev => ({...prev, ...updatedData}));
+    }
+
+    try {
+      // send api request
+      const response = await fetch(`${API_URL}/tasks/${taskId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!response.ok) throw new Error("Failed to update task");
+      
+      const savedTask = await response.json();
+      setTasks(prev => prev.map(t => t.id === taskId ? savedTask : t))
+
+    } catch (err) {
+      console.error(err);
+      fetchTasks()
+    }
   };
 
   const toggleTask = async (e, taskId, isCompleted) => {
@@ -93,6 +133,7 @@ export default function TaskBoard() {
         task={selectedTask} 
         isOpen={!!selectedTask} 
         onClose={() => setSelectedTask(null)} 
+        onUpdate={updateTask}
       />
 
       {/* Header Controls (Always Visible) */}
@@ -105,7 +146,7 @@ export default function TaskBoard() {
             type="text"
             placeholder="Search..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={handleSearchChange}
             className="w-full h-10 rounded-lg bg-zinc-900 border border-zinc-800 pl-10 pr-10 text-sm text-zinc-100 placeholder-zinc-500 focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/50 focus:bg-zinc-900 focus:outline-none transition-all"
           />
           {searchQuery && (
@@ -147,7 +188,7 @@ export default function TaskBoard() {
                   {task.title}
                 </div>
                 
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute top-4 right-4 bg-zinc-900 pl-2 shadow-[-10px_0_10px_0_rgba(24,24,27,1)]">
+                <div className="flex gap-1 transition-opacity absolute top-4 right-4 bg-zinc-900 pl-2 shadow-[-10px_0_10px_0_rgba(24,24,27,1)]">
                    <button 
                     onClick={(e) => toggleTask(e, task.id, task.status === "completed")}
                     className={`p-1.5 rounded-md hover:bg-zinc-800 transition-colors ${task.status === 'completed' ? 'text-green-500' : 'text-zinc-500'}`}
@@ -162,6 +203,7 @@ export default function TaskBoard() {
                   </button>
                 </div>
               </div>
+
 
               <p className={`text-sm leading-relaxed line-clamp-3 mb-4 ${task.status === "completed" ? "text-zinc-600" : "text-zinc-400"}`}>
                 {task.summary || task.description}

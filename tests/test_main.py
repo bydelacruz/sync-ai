@@ -48,6 +48,40 @@ def test_read_own_tasks(client, test_task, attacker_token):
     assert res.json() == []
 
 
+def test_update_task_description_regenerates_ai(
+    client, test_task, token, mock_ai_summary, mock_ai_embedding
+):
+    """
+    Test that updating a description triggers the AI summary and embedding regeneration.
+    We request 'mock_ai_summary' and 'mock_ai_embedding' to assert they were called.
+    """
+    task_id = test_task["id"]
+    new_description = "Walk the dog in the park"
+
+    update = {
+        "description": new_description,
+    }
+
+    # 1. Perform the Update
+    res = client.put(
+        f"/tasks/{task_id}", json=update, headers={"Authorization": f"Bearer {token}"}
+    )
+
+    data = res.json()
+
+    # 2. Basic Assertions
+    assert res.status_code == 200
+    assert data["description"] == new_description
+
+    # 3. Check that the Mocked AI Summary was used
+    # (The value "Mocked AI Summary" comes from conftest.py)
+    assert data["summary"] == "Mocked AI Summary"
+
+    # 4. Verify the AI functions were actually triggered
+    mock_ai_summary.assert_called_once()
+    mock_ai_embedding.assert_called()
+
+
 def test_read_others_task(client, test_task, attacker_token):
     task_id = test_task["id"]
 
@@ -85,6 +119,20 @@ def test_delete_other_user_task(client, test_task, attacker_token):
     )
 
     assert res.status_code == 404
+
+
+def test_update_task(client, test_task, token):
+    task_id = test_task["id"]
+
+    update = {
+        "title": "groceries updated",
+    }
+
+    res = client.put(
+        f"/tasks/{task_id}", json=update, headers={"Authorization": f"Bearer {token}"}
+    )
+    assert res.status_code == 200
+    assert res.json()["title"] == "groceries updated"
 
 
 def test_filter_tasks(client, token):

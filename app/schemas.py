@@ -18,6 +18,11 @@ class TaskCreate(TaskBase):
     pass
 
 
+class TaskUpdate(BaseModel):
+    title: str | None = None
+    description: str | None = None
+
+
 class Task(TaskBase):
     id: int
 

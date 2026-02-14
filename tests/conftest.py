@@ -7,7 +7,7 @@ from sqlalchemy.orm import sessionmaker
 from app.main import app
 from app.database import get_db
 from fastapi.testclient import TestClient
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 
 load_dotenv()
@@ -19,8 +19,21 @@ TestingSessionLocal = sessionmaker(bind=test_engine, autocommit=False, autoflush
 
 @pytest.fixture(autouse=True)
 def mock_ai_embedding():
-    with patch("app.main.get_embedding") as mock:
-        mock.return_value = [0.1] * 768
+    with (
+        patch("app.crud.get_embedding") as mock_crud,
+        patch("app.main.get_embedding") as mock_main,
+    ):
+        mock_vec = [0.1] * 768
+        mock_crud.return_value = mock_vec
+        mock_main.return_value = mock_vec
+
+        yield mock_crud
+
+
+@pytest.fixture(autouse=True)
+def mock_ai_summary():
+    with patch("app.crud.get_ai_summary", new_callable=AsyncMock) as mock:
+        mock.return_value = "Mocked AI Summary"
         yield mock
 
 
