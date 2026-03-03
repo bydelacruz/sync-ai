@@ -143,7 +143,7 @@ async def update_task(db: Session, task_id: int, task_update: TaskUpdate, user: 
 
     # recalculate embedding
     if task_update.title or task_update.description:
-        combined_text = f"{task_update}: {task_update.description}"
+        combined_text = f"{task_update.title}: {task_update.description}"
         embedding = get_embedding(combined_text, task_type="retrieval_document")
         db_task.embeddings = embedding
 
